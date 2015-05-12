@@ -1,0 +1,64 @@
+<script src="jquery.js"></script>
+<script src="expression.js"></script>
+
+<style>
+	.expr-ui-list dt,
+	.expr-ui-list dd {
+		padding: 0;
+		margin: 0;
+		display: block;
+		line-height: 24px;
+	}
+
+	.expr-ui-list dt {
+		width: 200px;
+		padding-right: 20px;
+		text-align: right;
+		font-weight: 600;
+		float: left;
+	}
+
+	#expr-input {
+		width: 300px;
+		max-width: 300px;
+		min-height: 125px;
+	}
+</style>
+
+<script>
+
+	$( function() {
+
+		$('#expr-calc, #expr-parse').on('click', function(e) {
+			e.preventDefault();
+
+			var expr_input = $('#expr-input').val();
+			var expr = new Expression(expr_input);
+
+			$('#expr-tostring').text(expr.to_string());
+
+			if( $(this).is('#expr-calc') ) {
+				$('#expr-result').text(expr.calc());
+			}
+
+			return false;
+		}).click();
+
+	});
+
+</script>
+
+
+
+<dl class="expr-ui-list">
+	<dt>Input</dt>
+	<dd>
+		<textarea id="expr-input">5e-2 + -2e3</textarea>
+		<input id="expr-parse" type="submit" value="Parse only" />
+		<input id="expr-calc" type="submit" value="Parse and calc" />
+	</dd>
+	<dt>Generated expression</dt>
+	<dd id="expr-tostring"></dd>
+	<dt>Result</dt>
+	<dd id="expr-result"></dd>
+</dl>
