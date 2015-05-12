@@ -3,7 +3,7 @@
 ## Basic arithmetic
 
 ### Regular operators with precedence handling
-    * / + -
+    ^ * / + -
 
 ### Unary operators
     + -
