@@ -155,9 +155,7 @@ var Expression = function(expr_input) {
 			return expr;
 		}
 
-		var tree = build_tree(expr);
-		console.log('tree', tree);
-		return tree;
+		return build_tree(expr);
 	}
 
 	this.calc = function(variables, node) {
@@ -172,7 +170,7 @@ var Expression = function(expr_input) {
 		}
 		
 		if( node !== null && typeof node !== 'object' ) {
-			return window.eval(node);
+			return parseFloat(node);
 		}
 
 		if( node.left.operator ) {

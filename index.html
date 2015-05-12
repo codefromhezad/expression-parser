@@ -29,16 +29,20 @@
 
 	$( function() {
 
-		$('#expr-calc, #expr-parse').on('click', function(e) {
+		$('#expr-calc').on('click', function(e) {
 			e.preventDefault();
 
 			var expr_input = $('#expr-input').val();
 			var expr = new Expression(expr_input);
 
 			$('#expr-tostring').text(expr.to_string());
+			
+			var calcValue = expr.calc();
 
-			if( $(this).is('#expr-calc') ) {
-				$('#expr-result').text(expr.calc());
+			if( calcValue !== NaN ) {
+				$('#expr-result').text('--');
+			} else {
+				$('#expr-result').text(calcValue);
 			}
 
 			return false;
@@ -53,9 +57,8 @@
 <dl class="expr-ui-list">
 	<dt>Input</dt>
 	<dd>
-		<textarea id="expr-input">5e-2 + -2e3</textarea>
-		<input id="expr-parse" type="submit" value="Parse only" />
-		<input id="expr-calc" type="submit" value="Parse and calc" />
+		<textarea id="expr-input">5 * t^2 + 2 * t + 5e-2</textarea>
+		<input id="expr-calc" type="submit" value="Parse / calc" />
 	</dd>
 	<dt>Generated expression</dt>
 	<dd id="expr-tostring"></dd>
