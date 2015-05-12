@@ -1,8 +1,28 @@
 var Expression = function(expr_input) {
-
-	this.operators = ['e', '*', '/', '+', '-'];
+	this.operator_functions = {
+		'^': function(l, r) {
+			return Math.pow(l, r);
+		},
+		'e': function(l, r) {
+			return l * Math.pow(10, r);
+		},
+		'*': function(l, r) {
+			return l * r;
+		},
+		'/': function(l, r) {
+			return l / r;
+		},
+		'+': function(l, r) {
+			return l + r;
+		},
+		'-': function(l, r) {
+			return l - r;
+		}
+	};
+	this.operators = Object.keys(this.operator_functions);
 	this.left_unary_operators = ['+', '-'];
 	this.grouping_operator = '()';
+
 
 	this.parenthesis_groups = [];
 
@@ -167,7 +187,11 @@ var Expression = function(expr_input) {
 			rval = variables[node.right] ? variables[node.right] : node.right;
 		}
 
-		return window.eval(lval + node.operator + rval);
+		if( this.operator_functions.hasOwnProperty(node.operator) ) {
+			return this.operator_functions[node.operator](parseFloat(lval), parseFloat(rval));
+		} else {
+			console.error('Unrecognized operator: ', node.operator);
+		}
 	}
 
 	this.to_string = function(node) {
