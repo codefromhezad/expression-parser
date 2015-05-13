@@ -12,42 +12,8 @@ function in_array(needle, haystack) {
 }
 
 
-/* Expression pseudo class */
+/* Single Expression pseudo class */
 var Expression = function(expr_input) {
-	this.functions = {};
-	this.statements = [];
-
-	this.expression = expr_input;
-
-	var expr = this.expression.replace(/ +/g, '');
-	this.statements = expr.split("\n");
-
-	for(var i = 0; i < this.statements.length; i++) {
-		/* Find functions declarations */
-		var stmt = this.statements[i];
-
-		var func_match = (/([a-zA-Z]+)\(([a-zA-Z0-9\,]+)\)\=(.+)/g).exec(stmt);
-
-		if( func_match ) {
-			var len = func_match[0].length;
-			var index = func_match.index;
-
-			var func_name = func_match[1];
-			var func_params = func_match[2];
-			var func_body = func_match[3];
-
-			stmt = str_replace_between(stmt, index, index + len, '##GROUP_FUNC#'+func_name+'##');
-			this.functions[func_name] = {params: func_params.split(','), body: func_body};
-		}
-	}
-
-	console.log(this.functions);
-	console.log(this.statements);
-}
-
-
-/* Single Statement pseudo class */
-var Statement = function(expr_input) {
 	this.operator_functions = {
 		'^': function(l, r) {
 			return Math.pow(l, r);
@@ -74,6 +40,7 @@ var Statement = function(expr_input) {
 	this.grouping_operator = '()';
 
 	this.parenthesis_groups = [];
+	this.functions = {};
 
 	//this.derivation_epsilon = 0.00001;
 
@@ -82,7 +49,7 @@ var Statement = function(expr_input) {
 
 	var that = this;
 
-	/* Statement parsing helpers */
+	/* Expression parsing helpers */
 	function operator_has_priority(operator, compare_operator) {
 		var op_index   = that.operators.indexOf(operator);
 		var cpop_index = that.operators.indexOf(compare_operator);
@@ -107,7 +74,23 @@ var Statement = function(expr_input) {
 		var operatorsPrecedence = this.operators.slice(0);
 		operatorsPrecedence.reverse();
 		
+		/* Removes spaces, tabs and newlines */
 		var expr = expression.trim().replace(/\s+/g, '');
+
+		/* Find functions declarations */
+		var func_match = (/([a-zA-Z]+)\(([a-zA-Z0-9\,]+)\)\=(.*)/g).exec(expr);
+
+		if( func_match ) {
+			var len = func_match[0].length;
+			var index = func_match.index;
+
+			var func_name = func_match[1];
+			var func_params = func_match[2];
+			var func_body = func_match[3];
+
+			expr = str_replace_between(expr, index, index + len, '##GROUP_FUNC#'+func_name+'##');
+			this.functions[func_name] = {params: func_params.split(','), body: func_body};
+		}
 
 		// Put parenthesises around tokens with unary operators following another operator
 		var left_tokens = operatorsPrecedence.concat(this.grouping_operator[0]);
@@ -145,7 +128,7 @@ var Statement = function(expr_input) {
 		}
 
 		// Actual Tree building loop/recursive function
-		var build_tree = function(expression) {
+		var build_tree = function(expression, func_name_if_function) {
 			var expr = expression.trim().replace(/\s+/g, '');
 
 			// Finding last occurence of an operator in the expression
@@ -162,21 +145,21 @@ var Statement = function(expr_input) {
 
 					if( (! part1) && in_array(operatorsPrecedence[i], that.left_unary_operators) ) {
 						// Unary operators when left part is empty
-						return {
-							signed_node: true,
-							operator: operatorsPrecedence[i],
-							left:  0,
-							right: build_tree(part2)
-						};
-
+						var left_part = 0;
+						var signed = true;
 					} else {
 						// Regular operators
-						return {
-							operator: operatorsPrecedence[i],
-							left:  build_tree(part1),
-							right: build_tree(part2)
-						};
-					}						
+						var left_part = build_tree(part1);
+						var signed = false;
+					}
+
+					return {
+						func_name_if_function: func_name_if_function,
+						signed_node: signed,
+						operator: operatorsPrecedence[i],
+						left:  left_part,
+						right: build_tree(part2)
+					};					
 				}
 			}
 
@@ -184,8 +167,16 @@ var Statement = function(expr_input) {
 			var inner_par_match = (/\#\#GROUP_PAR\#([0-9]+)\#\#/).exec(expr);
 			if( inner_par_match ) {
 				var par_index = inner_par_match[1];
-				var par_tree  = build_tree(that.parenthesis_groups[par_index], true);
+				var par_tree  = build_tree(that.parenthesis_groups[par_index], func_name_if_function);
 				return par_tree;
+			}
+
+			// Parsing node's function contents
+			var inner_func_match = (/\#\#GROUP_FUNC\#([a-zA-Z]+)\#\#/).exec(expr);
+			if( inner_func_match ) {
+				var func_name = inner_func_match[1];
+				var func_tree  = build_tree(that.functions[func_name].body, func_name);
+				return func_tree;
 			}
 
 			return expr;
@@ -228,7 +219,7 @@ var Statement = function(expr_input) {
 		}
 	}
 
-	this.to_string = function(node) {
+	this.to_string = function(node, dont_check_func_name) {
 		var lval, rval;
 
 		if( node === undefined ) {
@@ -237,6 +228,11 @@ var Statement = function(expr_input) {
 
 		if( node !== null && typeof node !== 'object' ) {
 			return node;
+		}
+
+		if( !dont_check_func_name && node.func_name_if_function ) {
+			var func = this.functions[node.func_name_if_function];
+			return node.func_name_if_function + '(' + func.params.join(', ') + ') = ' + this.to_string(node, true);
 		}
 
 		if( node.left.operator ) {
@@ -276,7 +272,7 @@ var Statement = function(expr_input) {
 		var settings = {
 
 			/* Actual Graph Settings */
-			input_variables: [],
+			func_input: null,
 			graph_color: '#2529ab',
 
 			/* Rendering Window settings */
@@ -312,8 +308,8 @@ var Statement = function(expr_input) {
 
 		var scaleCoords = function(x, y) {
 			return {
-				x: settings.graph_padding + (x - settings.min_x) / (settings.max_x - settings.min_x) * w,
-				y: settings.graph_padding + h - ((y - settings.min_y) / (settings.max_y - settings.min_y) * h)
+				x: Math.round(settings.graph_padding + (x - settings.min_x) / (settings.max_x - settings.min_x) * w),
+				y: Math.round(settings.graph_padding + h - ((y - settings.min_y) / (settings.max_y - settings.min_y) * h))
 			};
 		}
 
@@ -376,14 +372,15 @@ var Statement = function(expr_input) {
 		}
 
 		/* Function to use when no input variables (y is a constant) */
-		var renderConstant = function() {
+		var renderConstant = function(func_def) {
 			var first_point = true;
+			var func_expression = new Expression(func_def.body);
 
 			ctx.strokeStyle = settings.graph_color;
 			ctx.beginPath();
 
 			for (var x = settings.min_x; x <= settings.max_x; x += x_steo) {
-				var y = that.calc();
+				var y = func_expression.calc();
 				var scaled_coords = scaleCoords(x, y);
 
 				if(first_point) {
@@ -397,16 +394,18 @@ var Statement = function(expr_input) {
 		}
 
 		/* Function to use when one input variable (y is varying with x as its input) */
-		var renderOneVariable = function(input_varname) {
+		var renderOneVariable = function(func_def) {
 			var first_point = true;
+			var func_expression = new Expression(func_def.body);
 			var vars_object = {};
+			var input_varname = func_def.params[0];
 			vars_object[input_varname] = null;
 
 			ctx.strokeStyle = settings.graph_color;
-			ctx.beginPath() ;
+			ctx.beginPath();
 			for (var x = settings.min_x; x <= settings.max_x; x += x_step) {
 				vars_object[input_varname] = x;
-				var y = that.calc(vars_object);
+				var y = func_expression.calc(vars_object);
 				var scaled_coords = scaleCoords(x, y);
 
 				if(first_point) {
@@ -416,26 +415,34 @@ var Statement = function(expr_input) {
 					ctx.lineTo(scaled_coords.x, scaled_coords.y);
 				}
 			}
-			ctx.stroke();
 		}
 
+		/* General rendering function */
+		var renderFunc = function() {
+			/* Selecting function to use for rendering */
+			if( ! settings.func_input || ! that.functions[settings.func_input] ) {
+				console.error('Nothing to render');
+				return;
+			}
+
+			var number_of_inputs = that.functions[settings.func_input].params.length;
+			switch( number_of_inputs ) {
+				case 1:
+					renderOneVariable(that.functions[settings.func_input]);
+					break;
+				default: 
+					renderConstant(that.functions[settings.func_input]);
+					break;
+			}
+		}
 
 		/* Rendering Axes if necessary */
 		if( settings.draw_axes ) {
 			renderAxes();
 		}
 
-		/* Selecting function to use for rendering */
-		var number_of_inputs = settings.input_variables.length;
-		switch( settings.input_variables.length ) {
-			case 1:
-				renderOneVariable(settings.input_variables[0]);
-				break;
-			default: 
-				renderConstant();
-				break;
-		}
-		
+		/* GO ! */
+		renderFunc();
 	}
 	
 	/* "Constructor" */

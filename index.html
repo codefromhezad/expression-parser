@@ -2,26 +2,47 @@
 <script src="expression.js"></script>
 
 <style>
+	html {
+	  box-sizing: border-box;
+	  margin: 0;
+	  padding: 0;
+	}
+
+	*, *:before, *:after {
+	  box-sizing: inherit;
+	}
+
 	.expr-ui-list dt,
 	.expr-ui-list dd {
 		padding: 0;
 		margin: 0;
 		display: block;
 		line-height: 24px;
+		float: left;
+		min-height: 24px;
 	}
 
 	.expr-ui-list dt {
-		width: 200px;
+		width: 20%;
 		padding-right: 20px;
 		text-align: right;
 		font-weight: 600;
-		float: left;
+	}
+
+	.expr-ui-list dd {
+		width: 80%;
 	}
 
 	#expr-input {
-		width: 300px;
-		max-width: 300px;
+		width: 600px;
+		max-width: 600px;
 		min-height: 125px;
+		display: block;
+	}
+
+	#expr-calc {
+		margin: 10px 0;
+		font-size: 18px;
 	}
 
 	canvas {
@@ -42,27 +63,18 @@
 			var expr = new Expression(expr_input);
 
 			/* output to_stirng conversion */
-			$('#expr-tostring').text(expr.to_string());
-			
-			/* Calc final value if applicable */
-			var calcValue = expr.calc();
-			if( calcValue !== NaN ) {
-				$('#expr-result').text('--');
-			} else {
-				$('#expr-result').text(calcValue);
-			}
+			var str_expr = expr.to_string();
+			$('#expr-tostring').text(str_expr);
 
 			/* Draw function graph on canvas */
 			var canvas = $('#expr-graph-canvas')[0];
-			if (canvas.getContext) {
-				expr.to_canvas_graph( canvas, {
-					input_variables: ["t"],
-					min_y: -10,
-					max_y: 10,
-					min_x: -10,
-					max_x: 10
-				} );
-			}
+			expr.to_canvas_graph( canvas, {
+				func_input: "f",
+				min_y: -10,
+				max_y: 10,
+				min_x: -10,
+				max_x: 10
+			} );
 
 			return false;
 		}).click();
@@ -76,23 +88,16 @@
 <dl class="expr-ui-list">
 	<dt>Input</dt>
 	<dd>
-		<textarea id="expr-input">
-func(t, w) = -4*t^-2/3
-a=func(t,2)
-</textarea>
+		<textarea id="expr-input">f(t) = 4*t^-2/3</textarea>
 		<input id="expr-calc" type="submit" value="Parse / calc" />
 	</dd>
 
-	<dt>Generated expression</dt>
+	<dt>Output</dt>
 	<dd id="expr-tostring"></dd>
-
-	<dt>Result</dt>
-	<dd id="expr-result"></dd>
 
 	<dt>Function graph</dt>
 	<dd>
 		<div style="float: left;">
-			The graph is expecting to input function to use one variable called "t"
 			<canvas id="expr-graph-canvas" width="400" height="300"></canvas>
 		</div>
 	</dd>
