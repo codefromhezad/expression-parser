@@ -57,14 +57,12 @@
 			if (canvas.getContext) {
 				expr.to_canvas_graph( canvas, {
 					input_variables: ["t"],
-					min_y: -6,
-					max_y: 6,
+					min_y: -10,
+					max_y: 10,
 					min_x: -10,
 					max_x: 10
 				} );
 			}
-
-			console.log(expr.tree);
 
 			return false;
 		}).click();

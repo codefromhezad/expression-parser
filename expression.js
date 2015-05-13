@@ -70,7 +70,7 @@ var Expression = function(expr_input) {
 	this.parse = function(expression) {
 		var operatorsPrecedence = this.operators.slice(0);
 		operatorsPrecedence.reverse();
-		console.log(operatorsPrecedence);
+		
 		var expr = expression.trim().replace(/\s+/g, '');
 
 		// Put parenthesises around tokens with unary operators following another operator
