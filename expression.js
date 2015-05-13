@@ -408,6 +408,19 @@ var Expression = function(expr_input) {
 				var y = func_expression.calc(vars_object);
 				var scaled_coords = scaleCoords(x, y);
 
+				if( scaled_coords.x < 0 ) {
+					scaled_coords.x = -1;
+				}
+				if( scaled_coords.x > cw ) {
+					scaled_coords.x = cw+1;
+				}
+				if( scaled_coords.y < 0 ) {
+					scaled_coords.y = -1;
+				}
+				if( scaled_coords.y > ch ) {
+					scaled_coords.y = ch+1;
+				}
+
 				if(first_point) {
 					ctx.moveTo(scaled_coords.x, scaled_coords.y);
 					first_point = false ;
@@ -415,6 +428,7 @@ var Expression = function(expr_input) {
 					ctx.lineTo(scaled_coords.x, scaled_coords.y);
 				}
 			}
+			ctx.stroke();
 		}
 
 		/* General rendering function */

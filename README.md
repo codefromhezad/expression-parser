@@ -3,7 +3,6 @@
 ## TODO
 
 * Add predefined basic functions to Statements (sin, cos, sqrt, etc ...)
-* Find why f(t) = 4\*t^-2/3 doesn't work while f(t) = -4\*t^-2/3 works
 
 ## Basic arithmetic
 
