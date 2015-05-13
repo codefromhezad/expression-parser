@@ -1,5 +1,52 @@
-var Language
+/* General helpers */
+function str_replace_between(str, start, end, what) {
+    return str.substring(0, start) + what + str.substring(end);
+}
 
+function in_array(needle, haystack) {
+    var length = haystack.length;
+    for(var i = 0; i < length; i++) {
+        if(haystack[i] == needle) return true;
+    }
+    return false;
+}
+
+
+/* Expression pseudo class */
+var Expression = function(expr_input) {
+	this.functions = {};
+	this.statements = [];
+
+	this.expression = expr_input;
+
+	var expr = this.expression.replace(/ +/g, '');
+	this.statements = expr.split("\n");
+
+	for(var i = 0; i < this.statements.length; i++) {
+		/* Find functions declarations */
+		var stmt = this.statements[i];
+
+		var func_match = (/([a-zA-Z]+)\(([a-zA-Z0-9\,]+)\)\=(.+)/g).exec(stmt);
+
+		if( func_match ) {
+			var len = func_match[0].length;
+			var index = func_match.index;
+
+			var func_name = func_match[1];
+			var func_params = func_match[2];
+			var func_body = func_match[3];
+
+			stmt = str_replace_between(stmt, index, index + len, '##GROUP_FUNC#'+func_name+'##');
+			this.functions[func_name] = {params: func_params.split(','), body: func_body};
+		}
+	}
+
+	console.log(this.functions);
+	console.log(this.statements);
+}
+
+
+/* Single Statement pseudo class */
 var Statement = function(expr_input) {
 	this.operator_functions = {
 		'^': function(l, r) {
@@ -34,19 +81,6 @@ var Statement = function(expr_input) {
 	this.expression = expr_input;
 
 	var that = this;
-
-	/* Parsing / Strings helpers */
-	function str_replace_between(str, start, end, what) {
-	    return str.substring(0, start) + what + str.substring(end);
-	}
-
-	function in_array(needle, haystack) {
-	    var length = haystack.length;
-	    for(var i = 0; i < length; i++) {
-	        if(haystack[i] == needle) return true;
-	    }
-	    return false;
-	}
 
 	/* Statement parsing helpers */
 	function operator_has_priority(operator, compare_operator) {

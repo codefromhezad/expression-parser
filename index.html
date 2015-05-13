@@ -39,7 +39,7 @@
 
 			/* Parsing */
 			var expr_input = $('#expr-input').val();
-			var expr = new Statement(expr_input);
+			var expr = new Expression(expr_input);
 
 			/* output to_stirng conversion */
 			$('#expr-tostring').text(expr.to_string());
@@ -76,7 +76,10 @@
 <dl class="expr-ui-list">
 	<dt>Input</dt>
 	<dd>
-		<textarea id="expr-input">-4*t^-2/3</textarea>
+		<textarea id="expr-input">
+func(t, w) = -4*t^-2/3
+a=func(t,2)
+</textarea>
 		<input id="expr-calc" type="submit" value="Parse / calc" />
 	</dd>
 
