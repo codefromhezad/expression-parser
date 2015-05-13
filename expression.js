@@ -272,7 +272,6 @@ var Expression = function(expr_input) {
 		var settings = {
 
 			/* Actual Graph Settings */
-			func_input: null,
 			graph_color: '#2529ab',
 
 			/* Rendering Window settings */
@@ -434,19 +433,20 @@ var Expression = function(expr_input) {
 		/* General rendering function */
 		var renderFunc = function() {
 			/* Selecting function to use for rendering */
-			if( ! settings.func_input || ! that.functions[settings.func_input] ) {
-				console.error('Nothing to render');
+			if( ! Object.keys(that.functions).length ) {
 				return;
 			}
 
-			var number_of_inputs = that.functions[settings.func_input].params.length;
-			switch( number_of_inputs ) {
-				case 1:
-					renderOneVariable(that.functions[settings.func_input]);
-					break;
-				default: 
-					renderConstant(that.functions[settings.func_input]);
-					break;
+			for(var i in that.functions) {
+				var number_of_inputs = that.functions[i].params.length;
+				switch( number_of_inputs ) {
+					case 1:
+						renderOneVariable(that.functions[i]);
+						break;
+					default: 
+						renderConstant(that.functions[i]);
+						break;
+				}
 			}
 		}
 

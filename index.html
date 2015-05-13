@@ -69,7 +69,6 @@
 			/* Draw function graph on canvas */
 			var canvas = $('#expr-graph-canvas')[0];
 			expr.to_canvas_graph( canvas, {
-				func_input: "f",
 				min_y: -10,
 				max_y: 10,
 				min_x: -10,
@@ -88,12 +87,11 @@
 <dl class="expr-ui-list">
 	<dt>Input</dt>
 	<dd>
-		<textarea id="expr-input">f(t) = 4*t^-2/3</textarea>
+		<textarea id="expr-input">
+f(t) = 4*t^-2/3
+</textarea>
 		<input id="expr-calc" type="submit" value="Parse / calc" />
 	</dd>
-
-	<dt>Output</dt>
-	<dd id="expr-tostring"></dd>
 
 	<dt>Function graph</dt>
 	<dd>
