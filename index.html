@@ -23,6 +23,11 @@
 		max-width: 300px;
 		min-height: 125px;
 	}
+
+	canvas {
+		display: block;
+		background: #eee;
+	}
 </style>
 
 <script>
@@ -32,18 +37,34 @@
 		$('#expr-calc').on('click', function(e) {
 			e.preventDefault();
 
+			/* Parsing */
 			var expr_input = $('#expr-input').val();
 			var expr = new Expression(expr_input);
 
+			/* output to_stirng conversion */
 			$('#expr-tostring').text(expr.to_string());
 			
+			/* Calc final value if applicable */
 			var calcValue = expr.calc();
-
 			if( calcValue !== NaN ) {
 				$('#expr-result').text('--');
 			} else {
 				$('#expr-result').text(calcValue);
 			}
+
+			/* Draw function graph on canvas */
+			var canvas = $('#expr-graph-canvas')[0];
+			if (canvas.getContext) {
+				expr.to_canvas_graph( canvas, {
+					input_variables: ["t"],
+					min_y: -6,
+					max_y: 6,
+					min_x: -10,
+					max_x: 10
+				} );
+			}
+
+			console.log(expr.tree);
 
 			return false;
 		}).click();
@@ -57,11 +78,21 @@
 <dl class="expr-ui-list">
 	<dt>Input</dt>
 	<dd>
-		<textarea id="expr-input">5 * t^2 + 2 * t + 5e-2</textarea>
+		<textarea id="expr-input">2*t^2 / 3 * t</textarea>
 		<input id="expr-calc" type="submit" value="Parse / calc" />
 	</dd>
+
 	<dt>Generated expression</dt>
 	<dd id="expr-tostring"></dd>
+
 	<dt>Result</dt>
 	<dd id="expr-result"></dd>
+
+	<dt>Function graph</dt>
+	<dd>
+		<div style="float: left;">
+			The graph is expecting to input function to use one variable called "t"
+			<canvas id="expr-graph-canvas" width="400" height="300"></canvas>
+		</div>
+	</dd>
 </dl>

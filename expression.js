@@ -6,23 +6,23 @@ var Expression = function(expr_input) {
 		'e': function(l, r) {
 			return l * Math.pow(10, r);
 		},
-		'*': function(l, r) {
-			return l * r;
-		},
 		'/': function(l, r) {
 			return l / r;
 		},
-		'+': function(l, r) {
-			return l + r;
+		'*': function(l, r) {
+			return l * r;
 		},
 		'-': function(l, r) {
 			return l - r;
+		},
+		'+': function(l, r) {
+			return l + r;
 		}
 	};
+
 	this.operators = Object.keys(this.operator_functions);
 	this.left_unary_operators = ['+', '-'];
 	this.grouping_operator = '()';
-
 
 	this.parenthesis_groups = [];
 
@@ -70,11 +70,11 @@ var Expression = function(expr_input) {
 	this.parse = function(expression) {
 		var operatorsPrecedence = this.operators.slice(0);
 		operatorsPrecedence.reverse();
-		
+		console.log(operatorsPrecedence);
 		var expr = expression.trim().replace(/\s+/g, '');
 
 		// Put parenthesises around tokens with unary operators following another operator
-		var left_tokens = this.operators.concat(this.grouping_operator[0]);
+		var left_tokens = operatorsPrecedence.concat(this.grouping_operator[0]);
 		var right_tokens = this.left_unary_operators;
 
 		var left_tokens_re_str = left_tokens.map(function(v) { return '\\'+v; }).join('');
@@ -233,6 +233,181 @@ var Expression = function(expr_input) {
 			var spaces = node.operator == 'e' ? '' : ' ';
 			return lval + spaces + node.operator + spaces + rval;
 		}	
+	}
+
+	this.to_canvas_graph = function(canvas, opts) {
+
+		var settings = {
+
+			/* Actual Graph Settings */
+			input_variables: [],
+			graph_color: '#2529ab',
+
+			/* Rendering Window settings */
+			min_x: -10, 
+			max_x: 10,
+			min_y: -10,
+			max_y: 10,
+			graph_padding: 30,
+
+			/* Axes rendering settings (draw_axes must be true for them to apply) */
+			draw_axes: true,
+			show_max_axes_values: true,
+			axes_values_offset: 10,
+			axes_color: '#aaa',
+			axes_text_color: "#666",
+			axes_text_font: "15px Arial",
+		};
+
+		if( opts !== undefined ) {
+			for(var prop in opts) {
+				settings[prop] = opts[prop];
+			}
+		}
+
+		var that = this;
+		var ctx = canvas.getContext('2d');
+		var cw = canvas.width;
+		var ch = canvas.height;
+		var w = cw - settings.graph_padding * 2;
+		var h = ch - settings.graph_padding * 2;
+
+		ctx.clearRect(0,0,w,h);
+
+		var scaleCoords = function(x, y) {
+			return {
+				x: settings.graph_padding + (x - settings.min_x) / (settings.max_x - settings.min_x) * w,
+				y: settings.graph_padding + h - ((y - settings.min_y) / (settings.max_y - settings.min_y) * h)
+			};
+		}
+
+		var x_step = (settings.max_x - settings.min_x) / w;
+
+		/* Function to render axes */
+		var renderAxes = function() {
+			ctx.save();
+			ctx.lineWidth = 1;
+			ctx.strokeStyle = settings.axes_color;
+
+			var scaled_0_coords = scaleCoords(0, 0);
+			var scaled_min_coords = scaleCoords(settings.min_x, settings.min_y);
+			var scaled_max_coords = scaleCoords(settings.max_x, settings.max_y);
+
+			// +Y axis
+			ctx.beginPath() ;
+			ctx.moveTo(scaled_0_coords.x, scaled_0_coords.y) ;
+			ctx.lineTo(scaled_0_coords.x, scaled_max_coords.y) ;
+			ctx.stroke();
+
+			// -Y axis
+			ctx.beginPath() ;
+			ctx.moveTo(scaled_0_coords.x, scaled_0_coords.y) ;
+			ctx.lineTo(scaled_0_coords.x, scaled_min_coords.y) ;
+			ctx.stroke();
+
+			// +X axis
+			ctx.beginPath() ;
+			ctx.moveTo(scaled_0_coords.x, scaled_0_coords.y) ;
+			ctx.lineTo(scaled_max_coords.x, scaled_0_coords.y) ;
+			ctx.stroke();
+
+			// -X axis
+			ctx.beginPath() ;
+			ctx.moveTo(scaled_0_coords.x, scaled_0_coords.y) ;
+			ctx.lineTo(scaled_min_coords.x, scaled_0_coords.y) ;
+			ctx.stroke();
+
+			// Min/Max X/Y Values
+			if( settings.show_max_axes_values ) {
+				ctx.font = settings.axes_text_font;
+				ctx.fillStyle = settings.axes_text_color;
+				
+				// +X Value
+				ctx.textAlign = "center";
+				ctx.fillText(settings.max_x, scaled_max_coords.x, scaled_0_coords.y - settings.axes_values_offset);
+
+				// -X Value
+				ctx.textAlign = "center";
+				ctx.fillText(settings.min_x, scaled_min_coords.x, scaled_0_coords.y - settings.axes_values_offset);
+
+				// +Y Value
+				ctx.textAlign = "left";
+				ctx.fillText(settings.max_y, scaled_0_coords.x + settings.axes_values_offset, scaled_max_coords.y);
+
+				// -Y Value
+				ctx.textAlign = "left";
+				ctx.fillText(settings.min_y, scaled_0_coords.x + settings.axes_values_offset, scaled_min_coords.y);
+			}
+
+			ctx.restore();
+		}
+
+		/* Function to use when no input variables (y is a constant) */
+		var renderConstant = function() {
+			var first_point = true;
+
+			ctx.strokeStyle = settings.graph_color;
+			ctx.beginPath();
+
+			for (var x = settings.min_x; x <= settings.max_x; x += x_steo) {
+				var y = that.calc();
+				var scaled_coords = scaleCoords(x, y);
+
+				if( scaled_coords.x < settings.graph_padding || scaled_coords.x > w - settings.graph_padding || 
+					scaled_coords.y < settings.graph_padding || scaled_coords.y > h - settings.graph_padding ) {
+					continue;
+				}
+
+				if(first_point) {
+					ctx.moveTo(scaled_coords.x, scaled_coords.y);
+					first_point = false ;
+				} else {
+					ctx.lineTo(scaled_coords.x, scaled_coords.y);
+				}
+			}
+			ctx.stroke();
+		}
+
+		/* Function to use when one input variable (y is varying with x as its input) */
+		var renderOneVariable = function(input_varname) {
+			var first_point = true;
+			var vars_object = {};
+			vars_object[input_varname] = null;
+
+			ctx.strokeStyle = settings.graph_color;
+			ctx.beginPath() ;
+			for (var x = settings.min_x; x <= settings.max_x; x += x_step) {
+				vars_object[input_varname] = x;
+				var y = that.calc(vars_object);
+				var scaled_coords = scaleCoords(x, y);
+				
+				if(first_point) {
+					ctx.moveTo(scaled_coords.x, scaled_coords.y);
+					first_point = false ;
+				} else {
+					ctx.lineTo(scaled_coords.x, scaled_coords.y);
+				}
+			}
+			ctx.stroke();
+		}
+
+
+		/* Rendering Axes if necessary */
+		if( settings.draw_axes ) {
+			renderAxes();
+		}
+
+		/* Selecting function to use for rendering */
+		var number_of_inputs = settings.input_variables.length;
+		switch( settings.input_variables.length ) {
+			case 1:
+				renderOneVariable(settings.input_variables[0]);
+				break;
+			default: 
+				renderConstant();
+				break;
+		}
+		
 	}
 	
 	/* "Constructor" */
