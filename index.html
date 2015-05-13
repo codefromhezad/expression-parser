@@ -60,20 +60,12 @@
 
 			/* Parsing */
 			var expr_input = $('#expr-input').val();
-			var expr = new Expression(expr_input);
+			var canvas = $('#expr-graph-canvas')[0]
 
-			/* output to_stirng conversion */
-			var str_expr = expr.to_string();
-			$('#expr-tostring').text(str_expr);
+			var code = new Code(expr_input, canvas);
 
 			/* Draw function graph on canvas */
-			var canvas = $('#expr-graph-canvas')[0];
-			expr.to_canvas_graph( canvas, {
-				min_y: -10,
-				max_y: 10,
-				min_x: -10,
-				max_x: 10
-			} );
+			code.to_graph();
 
 			return false;
 		}).click();
@@ -89,6 +81,7 @@
 	<dd>
 		<textarea id="expr-input">
 f(t) = 4*t^-2/3
+g(t) = 2*t + 3
 </textarea>
 		<input id="expr-calc" type="submit" value="Parse / calc" />
 	</dd>

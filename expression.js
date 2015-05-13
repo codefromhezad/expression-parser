@@ -11,6 +11,28 @@ function in_array(needle, haystack) {
     return false;
 }
 
+var Code = function(expr_input, canvas) {
+	this.statements = [];
+	this.expressions = [];
+	this.statements = expr_input.split("\n");
+
+	var ctx = canvas.getContext('2d');
+	var cw = canvas.width;
+	var ch = canvas.height;
+
+	for(var i = 0; i < this.statements.length; i++) {
+		if( this.statements[i].trim() ) {
+			this.expressions.push(new Expression(this.statements[i]));
+		}
+	}
+
+	this.to_graph = function(opts) {
+		ctx.clearRect(0,0,cw,ch);
+		for(var i = 0; i < this.expressions.length; i++) {
+			this.expressions[i].to_graph(canvas, opts);
+		}
+	}
+}
 
 /* Single Expression pseudo class */
 var Expression = function(expr_input) {
@@ -219,55 +241,7 @@ var Expression = function(expr_input) {
 		}
 	}
 
-	this.to_string = function(node, dont_check_func_name) {
-		var lval, rval;
-
-		if( node === undefined ) {
-			node = this.tree;
-		}
-
-		if( node !== null && typeof node !== 'object' ) {
-			return node;
-		}
-
-		if( !dont_check_func_name && node.func_name_if_function ) {
-			var func = this.functions[node.func_name_if_function];
-			return node.func_name_if_function + '(' + func.params.join(', ') + ') = ' + this.to_string(node, true);
-		}
-
-		if( node.left.operator ) {
-			lval = this.to_string(node.left);
-
-			if( ! operator_has_priority(node.left.operator, node.operator) ) {
-				lval = '(' + lval + ')';
-			}
-		} else {
-			if( node.left.signed_node ) {
-				lval = "";
-			} else {
-				lval = node.left;
-			}
-		}
-
-		if( node.right.operator ) {
-			rval = this.to_string(node.right);
-
-			if( ! operator_has_priority(node.right.operator, node.operator) ) {
-				rval = '(' + rval + ')';
-			}
-		} else {
-			rval = node.right;
-		}
-
-		if( node.signed_node ) {
-			return node.operator + rval;
-		} else {
-			var spaces = node.operator == 'e' ? '' : ' ';
-			return lval + spaces + node.operator + spaces + rval;
-		}	
-	}
-
-	this.to_canvas_graph = function(canvas, opts) {
+	this.to_graph = function(canvas, opts) {
 
 		var settings = {
 
@@ -302,8 +276,6 @@ var Expression = function(expr_input) {
 		var ch = canvas.height;
 		var w = cw - settings.graph_padding * 2;
 		var h = ch - settings.graph_padding * 2;
-
-		ctx.clearRect(0,0,cw,ch);
 
 		var scaleCoords = function(x, y) {
 			return {
