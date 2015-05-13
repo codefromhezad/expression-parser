@@ -272,7 +272,7 @@ var Expression = function(expr_input) {
 		var w = cw - settings.graph_padding * 2;
 		var h = ch - settings.graph_padding * 2;
 
-		ctx.clearRect(0,0,w,h);
+		ctx.clearRect(0,0,cw,ch);
 
 		var scaleCoords = function(x, y) {
 			return {
@@ -285,7 +285,6 @@ var Expression = function(expr_input) {
 
 		/* Function to render axes */
 		var renderAxes = function() {
-			ctx.save();
 			ctx.lineWidth = 1;
 			ctx.strokeStyle = settings.axes_color;
 
@@ -338,8 +337,6 @@ var Expression = function(expr_input) {
 				ctx.textAlign = "left";
 				ctx.fillText(settings.min_y, scaled_0_coords.x + settings.axes_values_offset, scaled_min_coords.y);
 			}
-
-			ctx.restore();
 		}
 
 		/* Function to use when no input variables (y is a constant) */
@@ -352,11 +349,6 @@ var Expression = function(expr_input) {
 			for (var x = settings.min_x; x <= settings.max_x; x += x_steo) {
 				var y = that.calc();
 				var scaled_coords = scaleCoords(x, y);
-
-				if( scaled_coords.x < settings.graph_padding || scaled_coords.x > w - settings.graph_padding || 
-					scaled_coords.y < settings.graph_padding || scaled_coords.y > h - settings.graph_padding ) {
-					continue;
-				}
 
 				if(first_point) {
 					ctx.moveTo(scaled_coords.x, scaled_coords.y);
@@ -380,7 +372,7 @@ var Expression = function(expr_input) {
 				vars_object[input_varname] = x;
 				var y = that.calc(vars_object);
 				var scaled_coords = scaleCoords(x, y);
-				
+
 				if(first_point) {
 					ctx.moveTo(scaled_coords.x, scaled_coords.y);
 					first_point = false ;
