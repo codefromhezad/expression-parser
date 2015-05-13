@@ -39,7 +39,7 @@
 
 			/* Parsing */
 			var expr_input = $('#expr-input').val();
-			var expr = new Expression(expr_input);
+			var expr = new Statement(expr_input);
 
 			/* output to_stirng conversion */
 			$('#expr-tostring').text(expr.to_string());

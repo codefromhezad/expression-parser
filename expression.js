@@ -1,4 +1,6 @@
-var Expression = function(expr_input) {
+var Language
+
+var Statement = function(expr_input) {
 	this.operator_functions = {
 		'^': function(l, r) {
 			return Math.pow(l, r);
@@ -46,7 +48,7 @@ var Expression = function(expr_input) {
 	    return false;
 	}
 
-	/* Expression parsing helpers */
+	/* Statement parsing helpers */
 	function operator_has_priority(operator, compare_operator) {
 		var op_index   = that.operators.indexOf(operator);
 		var cpop_index = that.operators.indexOf(compare_operator);
