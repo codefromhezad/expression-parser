@@ -100,7 +100,7 @@ var Expression = function(expr_input) {
 		var expr = expression.trim().replace(/\s+/g, '');
 
 		/* Find functions declarations */
-		var func_match = (/([a-zA-Z]+)\(([a-zA-Z0-9\,]+)\)\=(.*)/g).exec(expr);
+		var func_match = (/([a-zA-Z]+)\(([a-zA-Z0-9\,]*)\)\=(.*)/g).exec(expr);
 
 		if( func_match ) {
 			var len = func_match[0].length;
@@ -342,30 +342,8 @@ var Expression = function(expr_input) {
 			}
 		}
 
-		/* Function to use when no input variables (y is a constant) */
-		var renderConstant = function(func_def) {
-			var first_point = true;
-			var func_expression = new Expression(func_def.body);
-
-			ctx.strokeStyle = settings.graph_color;
-			ctx.beginPath();
-
-			for (var x = settings.min_x; x <= settings.max_x; x += x_steo) {
-				var y = func_expression.calc();
-				var scaled_coords = scaleCoords(x, y);
-
-				if(first_point) {
-					ctx.moveTo(scaled_coords.x, scaled_coords.y);
-					first_point = false ;
-				} else {
-					ctx.lineTo(scaled_coords.x, scaled_coords.y);
-				}
-			}
-			ctx.stroke();
-		}
-
 		/* Function to use when one input variable (y is varying with x as its input) */
-		var renderOneVariable = function(func_def) {
+		var renderYfromX = function(func_def) {
 			var first_point = true;
 			var func_expression = new Expression(func_def.body);
 			var vars_object = {};
@@ -412,11 +390,9 @@ var Expression = function(expr_input) {
 			for(var i in that.functions) {
 				var number_of_inputs = that.functions[i].params.length;
 				switch( number_of_inputs ) {
+					case 0:
 					case 1:
-						renderOneVariable(that.functions[i]);
-						break;
-					default: 
-						renderConstant(that.functions[i]);
+						renderYfromX(that.functions[i]);
 						break;
 				}
 			}
