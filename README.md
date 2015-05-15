@@ -26,3 +26,8 @@
 
 ### Functions
     f(x) = 2 * x ^ 2 + 4 * x + 2
+
+
+## Procedures
+
+    {{ draw f g }} # Will draw the graph(s) corresponding to the specified functions
