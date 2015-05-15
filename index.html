@@ -65,7 +65,6 @@
 			var code = new Code(expr_input, canvas);
 
 			/* Draw function graph on canvas */
-			code.to_graph();
 
 			return false;
 		}).click();
@@ -82,6 +81,8 @@
 		<textarea id="expr-input">
 f(t) = 4*t^-2/3
 g(t) = 2*t + 3
+
+{{ draw f }}
 </textarea>
 		<input id="expr-calc" type="submit" value="Parse / calc" />
 	</dd>

@@ -12,26 +12,65 @@ function in_array(needle, haystack) {
 }
 
 var Code = function(expr_input, canvas) {
-	this.statements = [];
-	this.expressions = [];
-	this.statements = expr_input.split("\n");
-
+	var that = this;
 	var ctx = canvas.getContext('2d');
 	var cw = canvas.width;
 	var ch = canvas.height;
 
-	for(var i = 0; i < this.statements.length; i++) {
-		if( this.statements[i].trim() ) {
-			this.expressions.push(new Expression(this.statements[i]));
+	this.statements = [];
+	this.expressions = [];
+	this.procedures = [];
+	this.statements = expr_input.split("\n");
+	this.procedures_actions = {
+		draw: function(func_names) {
+			ctx.clearRect(0,0,cw,ch);
+			for(var i = 0; i < that.expressions.length; i++) {
+				for(var j = 0; j < func_names.length; j++) {
+					if( in_array( func_names[j], Object.keys(that.expressions[i].functions) ) ) {
+						that.expressions[i].to_graph(canvas);
+					}
+				}
+			}
 		}
 	}
 
-	this.to_graph = function(opts) {
-		ctx.clearRect(0,0,cw,ch);
-		for(var i = 0; i < this.expressions.length; i++) {
-			this.expressions[i].to_graph(canvas, opts);
+	this.construct = function() {
+		/* Find procedures */
+		for(var i = 0; i < this.statements.length; i++) {
+			if( this.statements[i].trim() ) {
+
+				/* Find and retrieve procedures, and remove them from input expression */
+				var proc_match = (/\{\s*\{\s*(.+)\s*\}\s*\}/g).exec(this.statements[i]);
+
+				if( proc_match ) {
+					var len = proc_match[0].length;
+					var index = proc_match.index;
+
+					var proc_elements = proc_match[1].trim().split(/\s+/);
+					
+					this.statements[i] = str_replace_between(this.statements[i], index, index + len, '');
+
+					var pname = proc_elements.shift();
+					this.procedures.push({proc_name: pname, params: proc_elements});
+				}
+
+				/* Build expression */
+				this.expressions.push(new Expression(this.statements[i]));
+			}
+		}
+
+		/* Execute procedures */
+		for(var i = 0; i < this.procedures.length; i++) {
+			var proc = this.procedures[i];
+
+			if( this.procedures_actions[proc.proc_name] ) {
+				this.procedures_actions[proc.proc_name](proc.params);
+			}
 		}
 	}
+
+	/* Construct */
+	this.construct();
 }
 
 /* Single Expression pseudo class */
@@ -59,10 +98,10 @@ var Expression = function(expr_input) {
 
 	this.operators = Object.keys(this.operator_functions);
 	this.left_unary_operators = ['+', '-'];
-	this.grouping_operator = '()';
 
 	this.parenthesis_groups = [];
 	this.functions = {};
+	this.procedures = [];
 
 	//this.derivation_epsilon = 0.00001;
 
@@ -96,8 +135,10 @@ var Expression = function(expr_input) {
 		var operatorsPrecedence = this.operators.slice(0);
 		operatorsPrecedence.reverse();
 		
+		var expr = expression.trim();
+
 		/* Removes spaces, tabs and newlines */
-		var expr = expression.trim().replace(/\s+/g, '');
+		var expr = expr.replace(/\s+/g, '');
 
 		/* Find functions declarations */
 		var func_match = (/([a-zA-Z]+)\(([a-zA-Z0-9\,]*)\)\=(.*)/g).exec(expr);
@@ -115,7 +156,7 @@ var Expression = function(expr_input) {
 		}
 
 		// Put parenthesises around tokens with unary operators following another operator
-		var left_tokens = operatorsPrecedence.concat(this.grouping_operator[0]);
+		var left_tokens = operatorsPrecedence.concat( '(' );
 		var right_tokens = this.left_unary_operators;
 
 		var left_tokens_re_str = left_tokens.map(function(v) { return '\\'+v; }).join('');
@@ -403,7 +444,6 @@ var Expression = function(expr_input) {
 			renderAxes();
 		}
 
-		/* GO ! */
 		renderFunc();
 	}
 	
